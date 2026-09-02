@@ -1,17 +1,26 @@
-# Compiled
-*.elc
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
 
-# Packaging
-.cask/
-.eask/
-.eldev/
-.keg/
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+bin/
 
-# Built distribution
-dist/
+# OS
+.DS_Store
 
-# Backup files
-*~
+# Env
+.env
+*.env
 
-# Undo-tree save-files
-*.~undo-tree
+# Firebase / credentials
+firebase-service-account*.json
+
+# Logs
+*.log
