@@ -26,18 +26,29 @@
 ## 테스트
 
 - `./gradlew test` (JUnit 5, `spring.profiles.active=test`)
-- Testcontainers(PostgreSQL) 의존성이 이미 포함되어 있음.
+- 데이터베이스가 필요한 테스트는 Testcontainers(PostgreSQL/PostGIS)를 사용하므로 Docker가 실행 중이어야 합니다. 로컬 개발용 데이터베이스나 `.env`에는 의존하지 않습니다.
 - 테스트 작성 규칙(단위/통합 경계, 네이밍, Fixture 등)은 `docs/CODE_CONVENTIONS.md` 4장 참고.
 
 ## 코드 컨벤션
 
 - 네이밍, 패키지 배치, 정책 코드 위치, 테스트 규칙은 `docs/CODE_CONVENTIONS.md`에 정리되어 있습니다. 코드를 작성하기 전에 반드시 확인하세요.
 
+## 결정된 아키텍처
+
+### 최상위 패키지 레이아웃: 도메인별 패키지
+
+레이어(controller/service/repository)로 먼저 나누지 않고, 도메인별로 최상위 패키지를 나눕니다. 각 도메인 패키지 안에서 다시 `controller`, `service`(+`impl`), `repository`, `dto`(`request`/`response`), `entity`로 나눕니다. `docs/CODE_CONVENTIONS.md`의 모든 예시(`card/service/...`, `chat/controller/...`)가 이 구조를 전제합니다.
+
+- 예: `com.cusfit.cusfitbe.card`, `com.cusfit.cusfitbe.user`, `com.cusfit.cusfitbe.global`(공통 컴포넌트)
+
+### 환경 프로필 / 스키마 관리
+
+- Spring Profile을 `local`, `test`, `prod` 3개로 나누고 `application-{profile}.yml`로 분리합니다. 공통 설정은 `application.yml`에 두고 프로필별로 다른 값(DB, Redis 호스트, 로그 레벨 등)만 오버라이드합니다.
+- Flyway 마이그레이션은 단순 버전 증가(`V1__xxx.sql`, `V2__xxx.sql`, ...) 방식으로 관리합니다. **이미 적용된 마이그레이션 파일은 수정하지 않고, 항상 새 버전 파일을 추가**합니다 (수정하면 체크섬이 깨져 배포 환경에서 Flyway가 실패합니다).
+
 ## 아직 정해지지 않은 것 (TBD)
 
-아래는 `docs/CODE_CONVENTIONS.md`가 원래 참조하려 했던 상위 아키텍처 항목인데, 이 저장소에 아직 실제 코드가 없어 확정되지 않았습니다. 결정되는 즉시 이 파일과 `docs/CODE_CONVENTIONS.md`를 함께 갱신해야 합니다.
+아래는 이 저장소에 아직 실제 코드가 없어 확정되지 않은 항목입니다. 의도적으로 지금 정하지 않고 필요할 때 직접 정하기로 했습니다. 결정되는 즉시 이 파일과 `docs/CODE_CONVENTIONS.md`를 함께 갱신해야 합니다.
 
-- 공통 API 응답 포맷 (예: `ApiResponse<T>` 래퍼 사용 여부/구조)
-- 인증 흐름 세부 (Issuer 종류, JWT 클레임 구조, 소셜 로그인 여부 등)
-- 프로필/스키마 관리 방식
-- 최상위 패키지 레이아웃 (도메인별 패키지 분리 여부 — `docs/CODE_CONVENTIONS.md`의 예시는 도메인별 패키지를 전제하지만 이 저장소에서 확정된 것은 아님)
+- 공통 API 응답 포맷 (예: `ApiResponse<T>` 래퍼 사용 여부/구조) — 추후 직접 정의
+- 인증 흐름 세부 (Issuer 종류, JWT 클레임 구조, 소셜 로그인 여부 등) — 추후 직접 정의. `firebase-admin` 의존성이 있지만 FCM 푸시용일 수도, Firebase Auth 겸용일 수도 있어 단정하지 않음.

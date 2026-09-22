@@ -4,7 +4,9 @@
 
 일부 항목은 유사한 구조를 가진 참고 프로젝트(Deoham-BE)의 실제 사례를 참고해 정리했습니다. 이 저장소(CUSFIT-BE)에는 아직 해당 파일이 존재하지 않으므로, 아래 "참고 사례"는 근거가 아니라 예시로만 읽으세요. 실제로 코드를 작성하면 그 예시를 우리 저장소의 실제 경로로 교체해 나가야 합니다.
 
-패키지 레이아웃, 응답 포맷, 인증 흐름 등 더 큰 아키텍처 규칙을 담을 `CLAUDE.md`는 아직 이 저장소에 없습니다. 여기서는 그런 상위 아키텍처가 아니라 코드 레벨 네이밍/배치/테스트 관례만 다룹니다.
+프로젝트 현황과 기술 스택, 아직 결정되지 않은 상위 아키텍처 항목은 루트의 `CLAUDE.md`에서 관리합니다. 이 문서는 그중 코드 레벨의 네이밍, 배치, 데이터베이스 변경, 테스트 관례를 다룹니다. 두 문서가 충돌하면 실제 코드와 설정을 확인한 뒤 두 문서를 같은 변경에서 함께 갱신합니다.
+
+이 문서의 규칙은 기본값입니다. `반드시`, `금지`, `예외 없이`라고 명시한 항목은 필수 규칙이고, 그 밖의 항목은 합리적인 기본 선택입니다. 기본값을 벗어나는 편이 더 적절하다면 PR 설명에 이유와 대안을 남깁니다.
 
 ---
 
@@ -79,13 +81,13 @@
 
 - 주의 사례 (Deoham-BE 반례): `chat/service/ChatAccessGuard.java`와 `chat/service/ChatRoomAccessService.java`에 `requireParticipant(Card card, UUID userId)`가 순환 의존 회피를 위해 동일 로직으로 각각 존재합니다. 이건 "권장 패턴"이 아니라 반례로만 기억할 것 — 새 접근 제어 로직을 추가할 때 같은 상황이면 위 1·2번을 먼저 시도합니다.
 
-### 2.3 도메인 예외는 공통 `BusinessException` + `ErrorCode` enum으로 표현하고, 메시지는 호출부에서 문자열로 전달한다
+### 2.3 도메인 예외는 공통 `BusinessException` + 안정적인 `ErrorCode`로 표현한다
 
-`ErrorCode`는 HTTP 상태별로 소수의 범용 코드만 정의하고, 구체적인 실패 사유는 `BusinessException` 생성 시 두 번째 인자(message)로 넘깁니다. "정책 위반 종류"를 늘릴 때 `ErrorCode`에 항목을 추가하기보다 기존 코드 + 메시지 조합을 우선 사용합니다.
+기본적으로 `ErrorCode`는 HTTP 상태별 범용 코드를 사용하고, 구체적인 실패 사유는 `BusinessException` 생성 시 메시지로 전달합니다. 단, 클라이언트가 실패 원인에 따라 동작을 달리해야 하거나 운영 지표에서 별도로 집계해야 하는 경우에는 도메인별 코드를 추가합니다. 즉, 사람이 읽는 설명만 다르면 범용 코드를 사용하고 기계가 구분해야 하는 계약이면 구체적인 코드를 사용합니다.
 
 - 참고 사례 (Deoham-BE): `global/exception/ErrorCode.java` — `INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR` 6종만 존재.
 - 참고 사례 (Deoham-BE): `global/exception/BusinessException.java` — `public BusinessException(ErrorCode errorCode, String message)` 생성자가 이 패턴을 위해 명시적으로 제공됨.
-- 한계: 메시지가 한국어 문자열로 하드코딩되므로 다국어(i18n) 지원 계획이 생기면 이 정책은 재검토 대상입니다. 지금 규모에서는 유지하되, 메시지 문자열에 로직을 태우지 않습니다(예: 메시지 파싱으로 분기하지 않기).
+- 메시지는 표시용이며 API 계약이나 분기 조건으로 사용하지 않습니다. 메시지 파싱으로 로직을 분기하지 않고, 다국어 지원이 필요해지면 메시지 생성 위치를 재검토합니다.
 
 ### 2.4 트랜잭션 스코프 안에서만 유효한 값은 별도 record로 "탈출"시켜 비트랜잭션 계층에 넘긴다
 
@@ -98,32 +100,37 @@
 
 ## 3. 기타 반복되는 구조적 관례
 
-### 3.1 DTO ↔ Entity 변환은 DTO의 정적 팩토리 메서드(`from`/`of`)로 통일한다
+### 3.1 응답 DTO 변환은 정적 팩토리 메서드(`from`/`of`)로 통일한다
 
-DTO가 자신을 채우는 방법을 스스로 캡슐화하면 서비스 코드가 필드를 일일이 나열하지 않아도 되고, 변환 로직이 한 곳에 모입니다. 테스트에서 픽스처를 만들 때도 같은 팩토리를 재사용할 수 있어 4.3(Fixture 패턴)과도 연결됩니다.
+응답 DTO가 자신을 채우는 방법을 스스로 캡슐화하면 서비스 코드가 필드를 일일이 나열하지 않아도 되고 변환 로직이 한 곳에 모입니다.
 
 - 예: `XxxResponse.from(entity)`, `XxxResponse.of(a, b)`.
 - 주의 (Deoham-BE 반례): 참고 프로젝트는 일부 도메인(`user`, `report`, `notification`)만 정적 팩토리를 쓰고 `card`는 서비스 메서드 안에서 생성자를 14개 필드까지 직접 나열하는 방식이 혼재했습니다. 필드가 늘어날수록 가독성과 테스트 유지보수가 나빠지므로, 우리는 정적 팩토리로 통일합니다.
+- 요청 DTO는 HTTP 입력과 검증을 표현하는 객체입니다. 요청 DTO가 엔티티를 직접 변경하지 않으며, 엔티티 생성·변경은 서비스 또는 도메인 팩토리/메서드가 담당합니다.
 
 ### 3.2 컨트롤러는 리포지토리를 직접 참조하지 않고 항상 서비스 계층을 통한다
 
 컨트롤러 → 서비스 → 리포지토리 순서를 예외 없이 지킵니다. 컨트롤러 코드에서 `*.repository.*` import가 보이면 리뷰에서 반려합니다.
 
-### 3.3 목록/집계성 조회는 Spring Data 인터페이스 프로젝션을 사용한다
+### 3.3 단순 목록/집계 조회는 Spring Data 인터페이스 프로젝션을 우선 사용한다
 
-단순 엔티티 반환이 아니라 일부 컬럼만 필요한 집계 쿼리는 `~Projection` 인터페이스로 결과를 매핑합니다.
+일부 컬럼만 필요한 단순 목록·집계 쿼리는 `~Projection` 인터페이스로 결과를 매핑합니다. 복잡한 조인, 동적 조건, 공간 쿼리, 프로젝션으로 표현하기 어려운 페이징이 포함되면 DTO 쿼리나 별도 커스텀 리포지토리 구현을 사용할 수 있으며 선택 이유를 테스트나 PR에 남깁니다.
 
 - 참고 사례 (Deoham-BE): `chat/repository/UnreadCountProjection.java` — `interface UnreadCountProjection { UUID getRoomId(); Long getUnreadCount(); }`
 
 ### 3.4 주기 실행 로직은 `~Scheduler` 컴포넌트로 분리하고, 실제 상태 변경은 반드시 Write 서비스에 위임한다
 
-`@Scheduled` 메서드 자신은 엔티티나 리포지토리를 직접 다루지 않고, 트랜잭션 처리는 서비스로 위임한 뒤 예외를 로깅만 하고 삼킵니다(스케줄러 스레드가 죽지 않도록).
+`@Scheduled` 메서드 자신은 엔티티나 리포지토리를 직접 다루지 않고 트랜잭션 처리를 서비스로 위임합니다. 예외는 스케줄러 실행 자체를 중단시키지 않도록 경계에서 처리하되, 반드시 스택 트레이스와 작업 식별자를 로깅합니다. 중요한 작업에는 실패 메트릭과 알림도 연결합니다.
+
+스케줄 작업의 Write 서비스는 같은 대상을 다시 처리해도 안전하도록 멱등성을 고려합니다. 애플리케이션을 여러 인스턴스로 운영할 때 중복 실행이 문제가 된다면 분산 락이나 데이터베이스 기반 선점(`FOR UPDATE SKIP LOCKED` 등)을 적용합니다.
 
 - 참고 사례 (Deoham-BE): `card/scheduler/CardScheduler.java` — `@Scheduled(fixedDelay = 60000) public void expireCards() { try { cardWriteService.expireCards(); } catch (Exception e) { log.error(...); } }`
 
 ### 3.5 부수 효과는 이벤트 발행으로 분리하고, 커밋 이후 실행이 필요하면 `@TransactionalEventListener`를 쓴다
 
 알림 발송처럼 트랜잭션이 성공적으로 커밋된 후에만 실행돼야 하는 부수효과는 서비스가 직접 호출하지 않고 이벤트를 발행한 뒤 별도 리스너가 처리합니다. 이때 일반 `@EventListener`는 트랜잭션 커밋 전에도 동기 실행되므로, 커밋 후 실행이 필요하면 `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`을 명시적으로 사용합니다. 그냥 `@EventListener`를 쓰면 트랜잭션이 롤백돼도 이미 부수효과(알림 등)가 실행돼버리는 문제가 생깁니다.
+
+애플리케이션 내부 이벤트는 프로세스 종료 시 유실될 수 있으므로 전달 보장을 제공하지 않습니다. 결제, 필수 알림처럼 유실되면 안 되는 작업은 Outbox 같은 영속 이벤트 방식을 사용하고, 외부 호출은 재시도와 중복 실행을 고려해 멱등하게 설계합니다.
 
 - 참고 사례 (Deoham-BE): `notification/service/NotificationService.java` — 여러 알림 시점에서 `eventPublisher.publishEvent(new FcmPushEvent(...))` 호출, `notification/service/FcmSender.java`에서 `@Async("fcmTaskExecutor")`로 실제 발송은 별도 스레드에서 비동기 처리.
 
@@ -139,9 +146,17 @@ DTO가 자신을 채우는 방법을 스스로 캡슐화하면 서비스 코드�
 
 - 참고 사례 (Deoham-BE): `chat/translation/TranslationProvider.java`(인터페이스) — 구현체 `DeepLTranslationProvider`, `GeminiTranslationProvider`, `DummyTranslationProvider`를 `FailoverTranslationProvider` + `SimpleCircuitBreaker`가 감쌈.
 
+### 3.8 엔티티/스키마 변경은 Flyway 마이그레이션과 함께 제출한다
+
+이 프로젝트는 `spring.jpa.hibernate.ddl-auto: validate`를 사용하므로 Hibernate가 스키마를 생성하거나 변경하지 않습니다. 엔티티의 컬럼, 인덱스, 제약 조건을 변경하는 PR에는 대응하는 `src/main/resources/db/migration`의 Flyway 마이그레이션을 반드시 포함합니다.
+
+- 운영에 적용된 마이그레이션 파일은 수정하거나 재사용하지 않고 새 버전 파일을 추가합니다.
+- PostgreSQL/PostGIS 전용 타입, 인덱스, 네이티브 쿼리는 Testcontainers 기반 Repository 테스트로 실제 동작을 검증합니다.
+- 파괴적 변경은 확장 → 데이터 이관 → 축소 단계로 나누어 구버전 애플리케이션과의 호환 구간을 확보합니다.
+
 ---
 
-## 4. 테스트(TDD) 규칙
+## 4. 테스트 규칙
 
 ### 4.1 테스트 종류별 경계를 명확히 나눈다
 
@@ -150,7 +165,7 @@ DTO가 자신을 채우는 방법을 스스로 캡슐화하면 서비스 코드�
 - **Controller 테스트**: `@WebMvcTest` + MockMvc, Service 계층은 목킹한다. (`~ControllerDocs`의 Swagger 애너테이션은 테스트 대상이 아니다.)
 - **통합 테스트**: `@SpringBootTest` + Testcontainers는 여러 컴포넌트가 함께 동작하는 흐름(예: 이벤트 발행 → 리스너 처리)을 검증할 때만 사용한다.
 
-TDD의 Red-Green-Refactor 사이클은 피드백이 빨라야 의미가 있습니다. 모든 테스트가 컨테이너를 띄우면 한 사이클에 수십 초가 걸려 사이클 자체가 느려지므로, 대부분의 테스트는 컨테이너 없는 단위 테스트로 두고 컨테이너가 필요한 테스트는 최소화합니다.
+TDD를 적용할 때 Red-Green-Refactor 사이클은 피드백이 빨라야 의미가 있습니다. 모든 테스트가 컨테이너를 띄우면 한 사이클이 느려지므로, 대부분의 테스트는 컨테이너 없는 단위 테스트로 두고 실제 인프라가 필요한 테스트만 컨테이너를 사용합니다.
 
 ### 4.2 Given-When-Then 구조와 한글 `@DisplayName`을 사용한다
 
@@ -168,6 +183,31 @@ TDD의 Red-Green-Refactor 사이클은 피드백이 빨라야 의미가 있습�
 
 3.7에서 여러 구현체 + Failover 구조를 적용하기로 결정한 인터페이스에 한해, 인터페이스 레벨의 공통 테스트 스윗을 두고 모든 구현체가 그것을 통과하게 합니다. 새 구현체를 추가하거나 기존 구현체를 교체해도 Failover 로직이 깨지지 않는다는 것을 보장합니다.
 
+### 4.6 테스트는 개발자의 로컬 데이터베이스에 의존하지 않는다
+
+`./gradlew test`는 별도의 수동 준비 없이 반복 실행할 수 있어야 합니다. 데이터베이스가 필요한 Repository/통합 테스트는 Testcontainers가 격리된 PostgreSQL을 제공하며, `localhost`의 개발용 데이터베이스나 개인 `.env` 값에 의존하지 않습니다. Docker 실행 환경은 필요한 전제 조건으로 문서화합니다.
+
+---
+
+## 5. 규칙의 자동 검증
+
+### 5.1 테스트 통과를 변경의 기본 조건으로 둔다
+
+모든 PR과 기본 브랜치에서 `./gradlew test`가 통과해야 합니다. 새 코드 때문에 테스트 실행에 외부 서비스가 필요해지면 해당 서비스를 컨테이너나 테스트 대역으로 제공해 재현 가능한 상태를 유지합니다.
+
+### 5.2 기계적으로 판별 가능한 규칙은 도구로 검증한다
+
+첫 도메인 코드를 추가하기 전까지 포매터(Spotless 또는 Checkstyle)와 ArchUnit을 도입합니다. 포매터는 코드 스타일과 import를, ArchUnit은 Controller의 Repository 직접 참조 금지와 계층/패키지 의존 규칙을 검증합니다. 도구가 도입되기 전에는 같은 항목을 리뷰 체크리스트로 확인합니다.
+
+### 5.3 자동화하기 어려운 항목은 PR 체크리스트로 확인한다
+
+PR에서는 최소한 다음 항목을 확인합니다.
+
+- 엔티티 변경에 Flyway 마이그레이션과 Repository 테스트가 포함되었는가?
+- 접근 제어와 상태 전이의 실패 케이스가 테스트되었는가?
+- 이벤트·스케줄러·외부 호출이 재시도, 중복 실행, 유실 가능성을 다루는가?
+- 이 문서의 기본값을 벗어났다면 이유와 대안이 기록되었는가?
+
 ---
 
 ## 요약
@@ -176,6 +216,7 @@ TDD의 Red-Green-Refactor 사이클은 피드백이 빨라야 의미가 있습�
 |---|---|
 | 1. 네이밍 규칙 | 7 |
 | 2. 정책/검증 코드 배치 기준 | 4 |
-| 3. 기타 구조적 관례 | 7 |
-| 4. 테스트(TDD) 규칙 | 5 |
-| **합계** | **23** |
+| 3. 기타 구조적 관례 | 8 |
+| 4. 테스트 규칙 | 6 |
+| 5. 규칙의 자동 검증 | 3 |
+| **합계** | **28** |
