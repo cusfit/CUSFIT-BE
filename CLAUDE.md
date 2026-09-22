@@ -46,9 +46,17 @@
 - Spring Profile을 `local`, `test`, `prod` 3개로 나누고 `application-{profile}.yml`로 분리합니다. 공통 설정은 `application.yml`에 두고 프로필별로 다른 값(DB, Redis 호스트, 로그 레벨 등)만 오버라이드합니다.
 - Flyway 마이그레이션은 단순 버전 증가(`V1__xxx.sql`, `V2__xxx.sql`, ...) 방식으로 관리합니다. **이미 적용된 마이그레이션 파일은 수정하지 않고, 항상 새 버전 파일을 추가**합니다 (수정하면 체크섬이 깨져 배포 환경에서 Flyway가 실패합니다).
 
+### 공통 API 응답 포맷
+
+참고 프로젝트(Deoham-BE)의 `global.response`/`global.exception` 패키지를 그대로 포팅했습니다. 새 Controller는 이 포맷을 사용합니다.
+
+- `com.cusfit.cusfitbe.global.response.ApiResponse<T>` — `record ApiResponse<T>(boolean success, T data, ErrorBody error)`. 성공은 `ApiResponse.ok(data)`/`ApiResponse.ok()`, 실패는 `ApiResponse.fail(ErrorCode, message)`로 생성합니다.
+- `com.cusfit.cusfitbe.global.exception.ErrorCode` — HTTP 상태별 소수의 범용 코드(`INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR`)만 정의. `docs/CODE_CONVENTIONS.md` 2.3 참고 — 클라이언트가 분기해야 하는 계약이면 코드를 추가하고, 그 외에는 메시지로 구분합니다.
+- `com.cusfit.cusfitbe.global.exception.BusinessException` — `ErrorCode` + 메시지를 갖는 도메인 예외.
+- `com.cusfit.cusfitbe.global.exception.GlobalExceptionHandler` — `@RestControllerAdvice`. `BusinessException`, Bean Validation 예외, 인증/인가 예외, 처리되지 않은 예외를 모두 `ApiResponse.fail(...)`로 변환합니다.
+
 ## 아직 정해지지 않은 것 (TBD)
 
 아래는 이 저장소에 아직 실제 코드가 없어 확정되지 않은 항목입니다. 의도적으로 지금 정하지 않고 필요할 때 직접 정하기로 했습니다. 결정되는 즉시 이 파일과 `docs/CODE_CONVENTIONS.md`를 함께 갱신해야 합니다.
 
-- 공통 API 응답 포맷 (예: `ApiResponse<T>` 래퍼 사용 여부/구조) — 추후 직접 정의
 - 인증 흐름 세부 (Issuer 종류, JWT 클레임 구조, 소셜 로그인 여부 등) — 추후 직접 정의. `firebase-admin` 의존성이 있지만 FCM 푸시용일 수도, Firebase Auth 겸용일 수도 있어 단정하지 않음.

@@ -85,8 +85,9 @@
 
 기본적으로 `ErrorCode`는 HTTP 상태별 범용 코드를 사용하고, 구체적인 실패 사유는 `BusinessException` 생성 시 메시지로 전달합니다. 단, 클라이언트가 실패 원인에 따라 동작을 달리해야 하거나 운영 지표에서 별도로 집계해야 하는 경우에는 도메인별 코드를 추가합니다. 즉, 사람이 읽는 설명만 다르면 범용 코드를 사용하고 기계가 구분해야 하는 계약이면 구체적인 코드를 사용합니다.
 
-- 참고 사례 (Deoham-BE): `global/exception/ErrorCode.java` — `INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR` 6종만 존재.
-- 참고 사례 (Deoham-BE): `global/exception/BusinessException.java` — `public BusinessException(ErrorCode errorCode, String message)` 생성자가 이 패턴을 위해 명시적으로 제공됨.
+- 근거: `global/exception/ErrorCode.java` — `INVALID_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL_ERROR` 6종만 존재 (Deoham-BE에서 그대로 포팅).
+- 근거: `global/exception/BusinessException.java` — `public BusinessException(ErrorCode errorCode, String message)` 생성자가 이 패턴을 위해 명시적으로 제공됨.
+- 근거: `global/response/ApiResponse.java`, `global/exception/GlobalExceptionHandler.java` — `@RestControllerAdvice`가 `BusinessException`을 `ApiResponse.fail(code, message)`로 변환.
 - 메시지는 표시용이며 API 계약이나 분기 조건으로 사용하지 않습니다. 메시지 파싱으로 로직을 분기하지 않고, 다국어 지원이 필요해지면 메시지 생성 위치를 재검토합니다.
 
 ### 2.4 트랜잭션 스코프 안에서만 유효한 값은 별도 record로 "탈출"시켜 비트랜잭션 계층에 넘긴다
