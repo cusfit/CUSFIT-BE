@@ -41,6 +41,16 @@
 
 - 예: `com.cusfit.cusfitbe.card`, `com.cusfit.cusfitbe.user`, `com.cusfit.cusfitbe.global`(공통 컴포넌트)
 
+### 도메인 주도 설계(DDD-lite)
+
+도메인 패키지를 바운디드 컨텍스트로 보고, DDD 전술 패턴을 실용적인 수준으로 적용합니다. 세부 규칙은 `docs/CODE_CONVENTIONS.md` 7장입니다.
+
+- Aggregate Root당 리포지토리 하나, Aggregate 사이(특히 도메인 사이)는 객체 연관 대신 ID로만 참조합니다.
+- 불변식과 상태 전이는 엔티티 안에 두고(세터 금지, 정적 팩토리), 서비스는 트랜잭션·조율만 담당합니다.
+- 값 객체(`record`/`@Embeddable`)와 도메인 이벤트(과거형 `~Event`, 커밋 후 처리는 `@TransactionalEventListener`)를 사용합니다.
+- 도메인 모델과 JPA 엔티티는 분리하지 않고 `domain/application/infrastructure` 레이어도 만들지 않습니다(재검토 조건은 7.8). 도메인 사이 호출은 상대 도메인의 서비스 인터페이스 또는 이벤트로만 합니다.
+- 의존 규칙은 `ArchitectureTest`(ArchUnit)로 검증합니다.
+
 ### 환경 프로필 / 스키마 관리
 
 - Spring Profile을 `local`, `test`, `prod` 3개로 나누고 `application-{profile}.yml`로 분리합니다. 공통 설정은 `application.yml`에 두고 프로필별로 다른 값(DB, Redis 호스트, 로그 레벨 등)만 오버라이드합니다.
