@@ -1,8 +1,8 @@
 package com.cusfit.cusfitbe;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -12,14 +12,14 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 class CusfitBeApplicationTests {
 
-    @Container
-    @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRESQL =
-            new PostgreSQLContainer<>(DockerImageName.parse("postgis/postgis:16-3.4")
-                    .asCompatibleSubstituteFor("postgres"));
+	@Container
+	@ServiceConnection
+	static final PostgreSQLContainer<?> POSTGRESQL =
+			new PostgreSQLContainer<>(DockerImageName.parse("postgis/postgis:16-3.4")
+					.asCompatibleSubstituteFor("postgres"));
 
-    @Test
-    void contextLoads() {
-    }
+	@Test
+	void contextLoads() {
+	}
 
 }
