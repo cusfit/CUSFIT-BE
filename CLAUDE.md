@@ -35,8 +35,9 @@
 
 ## 에이전트 워크플로
 
-- 도메인 구현은 관리자(Claude 메인 세션) / 검증자(Claude `verifier` 서브에이전트) / 작성자(Codex) 파이프라인으로 진행합니다. 역할, 수정 가능 경로, 작업 루프는 `docs/AGENT_WORKFLOW.md` 참고.
-- `.work/role` 파일이 있으면 파이프라인 진행 중입니다. `.claude/hooks/role-guard.sh`가 그 역할에 맞지 않는 파일 수정을 차단합니다.
+- 도메인 구현은 관리자(Claude 또는 Codex 메인 세션) / 검증자·리뷰어(Claude `verifier`) / 작성자(Codex) 파이프라인으로 진행합니다. 각 작업은 독립 worktree/브랜치에서 수행하며, 여러 작성자를 병렬 실행하고 관리자가 검증 후 순차 통합합니다.
+- 관리자는 `scripts/pipeline.py`로 작업 등록·상태 조회·검증·통합을 수행합니다. `.work/tasks`와 `.work/results`는 관리자 공간에, `.work/role`과 `.work/task.json`은 각 작업 공간에 둡니다.
+- `.claude/hooks/role-guard.sh`는 역할별 허용 경로와 작업자의 Bash를 제한합니다. Codex 변경은 단계 종료 시 경로/HEAD/리뷰 지문 검사로 확인합니다. 운영 명령과 복구 절차는 `docs/AGENT_WORKFLOW.md`를 먼저 읽으세요.
 
 ## 결정된 아키텍처
 
