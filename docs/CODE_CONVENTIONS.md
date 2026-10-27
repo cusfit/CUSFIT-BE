@@ -101,6 +101,12 @@
 
 ## 3. 기타 반복되는 구조적 관례
 
+기본 저장·조회 구현의 공통 엔티티는 `global.entity.BaseCreatedEntity`입니다. ID는 `Long`/IDENTITY,
+생성 시각은 `Instant`/`timestamptz`로 저장 시 자동 설정합니다. 새 테이블은 복수형 snake_case를 쓰고,
+Aggregate 간 Java 참조는 `Long` ID, DB 참조는 FK를 사용합니다. 아래 참고 프로젝트의 UUID 예시는
+네이밍·구조 예시이며 이 프로젝트의 ID 타입을 지정하지 않습니다. 수정 기능이 없는 엔티티에는
+`updatedAt`을 미리 추가하지 않습니다.
+
 ### 3.1 응답 DTO 변환은 정적 팩토리 메서드(`from`/`of`)로 통일한다
 
 응답 DTO가 자신을 채우는 방법을 스스로 캡슐화하면 서비스 코드가 필드를 일일이 나열하지 않아도 되고 변환 로직이 한 곳에 모입니다.

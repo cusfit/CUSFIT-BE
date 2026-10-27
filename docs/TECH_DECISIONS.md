@@ -4,6 +4,19 @@
 
 항목마다 추천안이 있지만 아직 확정이 아닙니다. 정하면 상태를 `확정`으로 바꾸고, 규칙으로 굳힐 내용은 `CODE_CONVENTIONS.md`로 옮깁니다.
 
+## 기본 저장·조회 구현에서 확정한 항목
+
+이번 구현에서는 아래 항목만 확정했습니다. 아래에 남아 있는 다른 추천안은 계속 미정입니다. 상세 계약은 `docs/tasks/domain-basics-contract.md`를 따릅니다.
+
+- D-01: `Long` / `BIGINT GENERATED ALWAYS AS IDENTITY`.
+- D-02: 복수형 snake_case 테이블명, 단수 엔티티명(약관은 `Terms`), snake_case 컬럼명.
+- D-03 일부: `Instant` / `timestamptz` 생성 시각. `BaseCreatedEntity`의 `@PrePersist`로 채웁니다. 현재 수정 기능이 없으므로 `updated_at` 및 Auditing 설정은 추가하지 않습니다.
+- D-05: 도메인 간 Java 참조는 ID만 사용하고 DB에는 FK를 둡니다. 삭제 API가 없으므로 기본 NO ACTION입니다.
+- D-06: 레시피 옵션은 레시피 내부 자식으로 `cascade = ALL`, `orphanRemoval = true`, DB `ON DELETE CASCADE`를 사용합니다.
+- API: `local` 전용 `/api/dev` 생성·단건 조회. 운영 인증·권한은 미정이며 개발 API는 명시적 사용자 ID를 받습니다.
+- 문자열은 `text`, 필수값은 NOT NULL 및 빈 문자열 검증. 닉네임 중복·길이 제한·삭제 상태·약관 종류 enum 등 제품 정책은 추가하지 않습니다.
+- 초기 운영 데이터, 목록·검색·페이지네이션, 외부 연동은 이번 범위에서 제외합니다.
+
 - 🔴 user 도메인 파일럿(첫 엔티티 + Flyway) 전에 정해야 하는 항목
 - 🟡 해당 도메인 엔티티 작업 전에 정하면 되는 항목
 - ⚪ Service·Controller 단계에서 정해도 되는 항목
