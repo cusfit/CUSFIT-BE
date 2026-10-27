@@ -8,6 +8,12 @@ plugins {
 group = 'com.cusfit'
 version = '0.0.1-SNAPSHOT'
 
+// iCloud 같은 동기화 폴더에서는 생성된 파일이 복제될 수 있어 산출물 경로를 선택할 수 있게 한다.
+def externalBuildDir = providers.gradleProperty('cusfitBuildDir')
+if (externalBuildDir.isPresent()) {
+    layout.buildDirectory.set(file(externalBuildDir.get()))
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
