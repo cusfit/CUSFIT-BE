@@ -5,12 +5,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
 @RestControllerAdvice
@@ -40,6 +42,13 @@ public class GlobalExceptionHandler {
 		log.warn("제약조건 위반 [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 		return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getStatus())
 				.body(ApiResponse.fail(ErrorCode.INVALID_REQUEST, ex.getMessage()));
+	}
+
+	@ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+	public ResponseEntity<ApiResponse<Void>> handleMalformedRequest(Exception ex, HttpServletRequest request) {
+		log.warn("잘못된 요청 형식 [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+		return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getStatus())
+				.body(ApiResponse.fail(ErrorCode.INVALID_REQUEST, ErrorCode.INVALID_REQUEST.getDefaultMessage()));
 	}
 
 	@ExceptionHandler(AuthenticationException.class)
