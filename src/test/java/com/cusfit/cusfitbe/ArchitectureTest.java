@@ -29,12 +29,9 @@ class ArchitectureTest {
 
 	@Test
 	void 컨트롤러는_리포지토리를_직접_참조하지_않는다() {
-		// 아직 controller 패키지가 없는 스켈레톤 단계라 allowEmptyShould로 공집합도 허용한다.
-		// 첫 Controller가 추가되면 이 옵션 없이도 규칙이 유효하게 검증된다.
 		ArchRule rule = noClasses()
 				.that().resideInAPackage("..controller..")
-				.should().dependOnClassesThat().resideInAPackage("..repository..")
-				.allowEmptyShould(true);
+				.should().dependOnClassesThat().resideInAPackage("..repository..");
 
 		rule.check(importedClasses());
 	}
@@ -44,8 +41,7 @@ class ArchitectureTest {
 		ArchRule rule = noClasses()
 				.that().resideInAPackage("..entity..")
 				.should().dependOnClassesThat().resideInAnyPackage(
-						"..controller..", "..service..", "..dto..", "..repository..")
-				.allowEmptyShould(true);
+						"..controller..", "..service..", "..dto..", "..repository..");
 
 		rule.check(importedClasses());
 	}
@@ -77,8 +73,7 @@ class ArchitectureTest {
 	void 엔티티의_기본_생성자는_protected이다() {
 		ArchRule rule = classes()
 				.that().areAnnotatedWith(Entity.class)
-				.should(haveProtectedNoArgConstructor())
-				.allowEmptyShould(true);
+				.should(haveProtectedNoArgConstructor());
 
 		rule.check(importedClasses());
 	}
