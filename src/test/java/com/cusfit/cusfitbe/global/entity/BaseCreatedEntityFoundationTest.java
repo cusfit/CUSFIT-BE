@@ -53,6 +53,20 @@ class BaseCreatedEntityFoundationTest {
 	}
 
 	@Test
+	@DisplayName("PrePersist 콜백을 실행하면 createdAt은 DB(timestamptz)와 같은 마이크로초 정밀도로 설정된다")
+	void prePersist_truncatesCreatedAtToMicros() throws Exception {
+		// given
+		TestCreatedEntity entity = new TestCreatedEntity();
+		Method prePersist = prePersistMethod();
+
+		// when
+		prePersist.invoke(entity);
+
+		// then
+		assertThat(entity.getCreatedAt()).isEqualTo(entity.getCreatedAt().truncatedTo(ChronoUnit.MICROS));
+	}
+
+	@Test
 	@DisplayName("기반 엔티티 클래스를 확인하면 MappedSuperclass이고 PrePersist 콜백이 하나 있다")
 	void classLevelMapping() {
 		// given

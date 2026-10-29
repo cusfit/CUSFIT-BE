@@ -9,10 +9,13 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -44,7 +47,8 @@ public class GlobalExceptionHandler {
 				.body(ApiResponse.fail(ErrorCode.INVALID_REQUEST, ex.getMessage()));
 	}
 
-	@ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+	@ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+			MissingServletRequestParameterException.class})
 	public ResponseEntity<ApiResponse<Void>> handleMalformedRequest(Exception ex, HttpServletRequest request) {
 		log.warn("잘못된 요청 형식 [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
 		return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getStatus())
@@ -70,6 +74,22 @@ public class GlobalExceptionHandler {
 		String message = "지원하지 않는 Content-Type입니다: " + request.getContentType();
 		log.warn("미지원 미디어 타입 [{} {}]: {}", request.getMethod(), request.getRequestURI(), message);
 		return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getStatus())
+				.body(ApiResponse.fail(ErrorCode.INVALID_REQUEST, message));
+	}
+
+	@ExceptionHandler(NoResourceFoundException.class)
+	public ResponseEntity<ApiResponse<Void>> handleNoResource(NoResourceFoundException ex, HttpServletRequest request) {
+		log.warn("없는 경로 [{} {}]", request.getMethod(), request.getRequestURI());
+		return ResponseEntity.status(ErrorCode.NOT_FOUND.getStatus())
+				.body(ApiResponse.fail(ErrorCode.NOT_FOUND, ErrorCode.NOT_FOUND.getDefaultMessage()));
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+		String message = "지원하지 않는 HTTP 메서드입니다: " + ex.getMethod();
+		log.warn("미지원 메서드 [{} {}]", request.getMethod(), request.getRequestURI());
+		return ResponseEntity.status(ex.getStatusCode())
+				.headers(ex.getHeaders())
 				.body(ApiResponse.fail(ErrorCode.INVALID_REQUEST, message));
 	}
 

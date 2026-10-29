@@ -93,6 +93,23 @@ class LocalDevApiSupportSmokeTest {
 				.doesNotHaveDuplicates()
 				.containsExactlyElementsOf(createdOptions.stream().map(option -> option.get("id")).toList());
 		assertThat(foundOptions).allSatisfy(option -> assertThat(createdAt(option)).isNotNull());
+		assertThat(foundOptions).extracting(LocalDevApiSupportSmokeTest::createdAt)
+				.containsExactlyElementsOf(createdOptions.stream().map(LocalDevApiSupportSmokeTest::createdAt).toList());
+	}
+
+	@Test
+	@DisplayName("local에서 등록되지 않은 개발 API 경로를 요청하면 NOT_FOUND 404를 반환한다")
+	void unknownDevPathReturnsNotFound() throws Exception {
+		// given
+		String path = "/api/dev/no-such-resource";
+
+		// when
+		ResultActions result = mockMvc.perform(get(path));
+
+		// then
+		result.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
 	}
 
 	@Test
@@ -117,7 +134,7 @@ class LocalDevApiSupportSmokeTest {
 		Long id = id(created);
 		Map<String, Object> found = getById(resource, id);
 		assertThat(found).containsAllEntriesOf(expected(body, id));
-		assertThat(createdAt(found)).isNotNull();
+		assertThat(createdAt(found)).isNotNull().isEqualTo(createdAt(created));
 		return id;
 	}
 

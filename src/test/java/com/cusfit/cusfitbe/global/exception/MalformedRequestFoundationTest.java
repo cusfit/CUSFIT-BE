@@ -1,5 +1,6 @@
 package com.cusfit.cusfitbe.global.exception;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -155,6 +156,49 @@ class MalformedRequestFoundationTest {
 
 		// then
 		expectInvalidRequest(result);
+	}
+
+	@Test
+	@DisplayName("필수 요청 파라미터가 없으면 INVALID_REQUEST 400을 반환한다")
+	void missingRequestParam() throws Exception {
+		// given
+		String path = STUB_PATH;
+
+		// when
+		ResultActions result = mockMvc.perform(get(path));
+
+		// then
+		expectInvalidRequest(result);
+	}
+
+	@Test
+	@DisplayName("등록되지 않은 경로를 요청하면 NOT_FOUND 404를 반환한다")
+	void unknownPath() throws Exception {
+		// given
+		String path = "/api/dev/no-such-resource";
+
+		// when
+		ResultActions result = mockMvc.perform(get(path));
+
+		// then
+		result.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.error.code").value(ErrorCode.NOT_FOUND.name()));
+	}
+
+	@Test
+	@DisplayName("지원하지 않는 HTTP 메서드로 요청하면 405와 INVALID_REQUEST 응답을 반환한다")
+	void unsupportedMethod() throws Exception {
+		// given
+		String path = STUB_PATH + "/1";
+
+		// when
+		ResultActions result = mockMvc.perform(delete(path));
+
+		// then
+		result.andExpect(status().isMethodNotAllowed())
+				.andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.error.code").value(ErrorCode.INVALID_REQUEST.name()));
 	}
 
 	private static void expectInvalidRequest(ResultActions result) throws Exception {
