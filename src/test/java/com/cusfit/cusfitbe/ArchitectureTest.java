@@ -51,8 +51,7 @@ class ArchitectureTest {
 		// 도메인 간 허용 경로는 상대 도메인의 service 인터페이스와 event뿐이다 (CODE_CONVENTIONS 7.6).
 		ArchRule rule = classes()
 				.that().resideOutsideOfPackage("..global..")
-				.should(notDependOnInternalsOfOtherDomains())
-				.allowEmptyShould(true);
+				.should(notDependOnInternalsOfOtherDomains());
 
 		rule.check(importedClasses());
 	}
