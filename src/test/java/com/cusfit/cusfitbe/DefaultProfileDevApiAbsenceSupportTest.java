@@ -1,6 +1,6 @@
 package com.cusfit.cusfitbe;
 
-import com.cusfit.cusfitbe.support.PostgisContainerConfig;
+import com.cusfit.cusfitbe.global.config.PostgisContainerConfig;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 

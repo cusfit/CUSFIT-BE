@@ -7,31 +7,22 @@ import com.cusfit.cusfitbe.catalog.entity.Brand;
 import com.cusfit.cusfitbe.catalog.entity.Menu;
 import com.cusfit.cusfitbe.catalog.entity.OptionPreset;
 import com.cusfit.cusfitbe.catalog.fixture.CatalogFixture;
+import com.cusfit.cusfitbe.global.config.PostgisContainerConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Testcontainers
+@Import(PostgisContainerConfig.class)
 class CatalogRepositoryTest {
 
 	private static final Long MISSING_BRAND_ID = 999_999L;
-
-	@Container
-	@ServiceConnection
-	static final PostgreSQLContainer<?> POSTGRESQL =
-			new PostgreSQLContainer<>(DockerImageName.parse("postgis/postgis:16-3.4")
-					.asCompatibleSubstituteFor("postgres"));
 
 	@Autowired
 	private BrandRepository brandRepository;

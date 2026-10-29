@@ -3,9 +3,9 @@ package com.cusfit.cusfitbe.notification.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.cusfit.cusfitbe.global.config.PostgisContainerConfig;
 import com.cusfit.cusfitbe.notification.entity.Notification;
 import com.cusfit.cusfitbe.notification.fixture.NotificationFixture;
-import com.cusfit.cusfitbe.support.PostgisContainerConfig;
 import com.cusfit.cusfitbe.user.entity.User;
 import com.cusfit.cusfitbe.user.fixture.UserFixture;
 import com.cusfit.cusfitbe.user.repository.UserRepository;

@@ -3,7 +3,7 @@ package com.cusfit.cusfitbe.support.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.cusfit.cusfitbe.support.PostgisContainerConfig;
+import com.cusfit.cusfitbe.global.config.PostgisContainerConfig;
 import com.cusfit.cusfitbe.support.entity.Faq;
 import com.cusfit.cusfitbe.support.entity.Inquiry;
 import com.cusfit.cusfitbe.support.entity.Notice;

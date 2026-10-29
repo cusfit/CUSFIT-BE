@@ -1,4 +1,4 @@
-package com.cusfit.cusfitbe.support;
+package com.cusfit.cusfitbe.global.config;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;

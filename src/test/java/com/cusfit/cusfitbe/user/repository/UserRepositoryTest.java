@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
-import com.cusfit.cusfitbe.support.PostgisContainerConfig;
+import com.cusfit.cusfitbe.global.config.PostgisContainerConfig;
 import com.cusfit.cusfitbe.user.entity.User;
 import com.cusfit.cusfitbe.user.fixture.UserFixture;
 import jakarta.persistence.EntityManager;
