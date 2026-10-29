@@ -1,6 +1,6 @@
 # 코드 컨벤션
 
-이 문서는 프로젝트가 아직 스켈레톤 단계(`com.cusfit.cusfitbe`에 코드가 거의 없는 상태)일 때, 앞으로 코드를 작성하면서 지킬 관례를 미리 정리한 것입니다.
+이 문서는 기본 도메인 구현과 이후 기능 확장에 적용하는 코드 작성 관례입니다.
 
 일부 항목은 유사한 구조를 가진 참고 프로젝트(Deoham-BE)의 실제 사례를 참고해 정리했습니다. 이 저장소(CUSFIT-BE)에는 아직 해당 파일이 존재하지 않으므로, 아래 "참고 사례"는 근거가 아니라 예시로만 읽으세요. 실제로 코드를 작성하면 그 예시를 우리 저장소의 실제 경로로 교체해 나가야 합니다.
 
@@ -216,7 +216,7 @@ TDD(테스트를 먼저 작성하고 Red-Green-Refactor로 진행하는 방식)�
 포매터(Spotless)와 ArchUnit을 도입했습니다 (`build.gradle`).
 
 - Spotless(`java` 블록) — import 정렬, 미사용 import 제거, 줄 끝 공백 제거를 강제합니다. 기존 코드가 탭 들여쓰기를 쓰고 있어 google-java-format처럼 전체를 재포맷하는 포매터는 쓰지 않고(스페이스로 강제 변환되어 기존 스타일과 충돌·대량 diff가 생김), `indentWithTabs()`로 현재 스타일만 기계적으로 강제합니다. `./gradlew spotlessCheck`는 `check` 태스크에 묶여 있어 `./gradlew check`/CI에서 자동으로 실행되고, 위반 시 `./gradlew spotlessApply`로 고칩니다.
-- ArchUnit(`src/test/java/.../ArchitectureTest.java`) — Controller의 Repository 직접 참조 금지(3.2)를 검증합니다. 아직 `controller`/`repository` 패키지가 없는 스켈레톤 단계라 `allowEmptyShould(true)`로 공집합을 허용해 두었고, 첫 Controller/Repository가 추가되면 이 옵션을 제거해 실제로 검증되게 합니다. 계층/패키지 의존 규칙이 늘어나면 이 클래스에 테스트 메서드를 추가합니다. DDD 의존 규칙(7.6: 엔티티의 상위 계층 의존 금지, 다른 도메인의 repository/entity/service.impl 직접 참조 금지, 엔티티의 public 세터 금지, `protected` 기본 생성자)도 같은 클래스에서 검증합니다. 다른 도메인 엔티티를 가리키는 `@ManyToOne` 등은 필드 타입 의존이므로 도메인 간 참조 규칙에 함께 걸립니다. 같은 도메인 안에서 Aggregate Root가 다른 Aggregate를 연관관계로 참조하는 경우는 코드로 구분할 수 없어 리뷰로 확인합니다(5.3).
+- ArchUnit(`src/test/java/.../ArchitectureTest.java`) — Controller의 Repository 직접 참조 금지(3.2)를 검증합니다. 실제 도메인 계층이 추가되어 대상 클래스가 비어 있으면 검사에 실패합니다. public 세터를 선택하는 금지 규칙만 선택 결과가 비는 것이 정상이므로 `allowEmptyShould(true)`를 유지합니다. 계층/패키지 의존 규칙이 늘어나면 이 클래스에 테스트 메서드를 추가합니다. DDD 의존 규칙(7.6: 엔티티의 상위 계층 의존 금지, 다른 도메인의 repository/entity/service.impl 직접 참조 금지, 엔티티의 public 세터 금지, `protected` 기본 생성자)도 같은 클래스에서 검증합니다. 다른 도메인 엔티티를 가리키는 `@ManyToOne` 등은 필드 타입 의존이므로 도메인 간 참조 규칙에 함께 걸립니다. 같은 도메인 안에서 Aggregate Root가 다른 Aggregate를 연관관계로 참조하는 경우는 코드로 구분할 수 없어 리뷰로 확인합니다(5.3).
 
 ### 5.3 자동화하기 어려운 항목은 PR 체크리스트로 확인한다
 
