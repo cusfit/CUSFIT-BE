@@ -2,13 +2,13 @@
 
 ## 배정
 - 작업 ID: support-basic
-- 선행 작업: user-basic (최종 smoke는 모든 도메인 통합 후 관리자 검증)
+- 선행 작업: user-basic, terms-basic, catalog-basic, recipe-basic, report-basic, notification-basic
 - 작성자 허용 경로: src/main/java/com/cusfit/cusfitbe/support, src/main/resources/db/migration/V7__create_support.sql
 - 검증 대상: '*Support*Test' (실제 테스트명은 검증자 보고서)
 - public API / Aggregate / 테이블 / 실패 계약: docs/tasks/domain-basics-contract.md의 해당 도메인과 공통 계약을 모두 따른다.
 
 ## 변경
-Notice/Faq/Inquiry 저장·조회. Inquiry는 UserReadService 참조 검증. 이 작업은 support 범위 테스트만 작성하고 최종 7개 도메인의 smoke와 비local 검증은 모든 도메인 통합 후 수행한다.
+Notice/Faq/Inquiry 저장·조회. Inquiry는 UserReadService 참조 검증. 마지막 도메인 작업이므로 7개 도메인의 local HTTP→실제 DB 생성·조회 smoke, Swagger 문서 등록, prod/test/default 프로필에서 개발 Controller 미등록 검증도 포함한다. 기존 도메인 구현 변경이 필요하면 관리자에게 보고한다.
 - Flyway: src/main/resources/db/migration/V7__create_support.sql
 
 ## 완료 기준
