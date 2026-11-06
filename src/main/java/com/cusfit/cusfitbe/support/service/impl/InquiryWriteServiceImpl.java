@@ -1,6 +1,9 @@
 package com.cusfit.cusfitbe.support.service.impl;
 
+import com.cusfit.cusfitbe.global.exception.BusinessException;
+import com.cusfit.cusfitbe.global.exception.ErrorCode;
 import com.cusfit.cusfitbe.support.dto.request.CreateInquiryRequest;
+import com.cusfit.cusfitbe.support.dto.request.SubmitInquiryRequest;
 import com.cusfit.cusfitbe.support.dto.response.InquiryResponse;
 import com.cusfit.cusfitbe.support.entity.Inquiry;
 import com.cusfit.cusfitbe.support.repository.InquiryRepository;
@@ -26,5 +29,11 @@ public class InquiryWriteServiceImpl implements InquiryWriteService {
 		userReadService.getById(request.authorId());
 		Inquiry entity = Inquiry.create(request.authorId(), request.title(), request.content());
 		return InquiryResponse.from(repository.save(entity));
+	}
+
+	@Override
+	public void submit(String authSubject, SubmitInquiryRequest request) {
+		// 토큰 subject와 회원 연결(D1), 문의 유형·첨부 컬럼, 제목 정리(D10)가 정해지면 구현한다.
+		throw new BusinessException(ErrorCode.NOT_IMPLEMENTED);
 	}
 }

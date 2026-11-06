@@ -179,4 +179,50 @@ class SupportRepositoryTest {
 				.findFirst()
 				.orElseThrow(() -> new AssertionError(table + "." + name + " 컬럼이 없습니다"));
 	}
+
+	@Test
+	@DisplayName("공지 목록은 등록 시각 최신순으로 조회한다")
+	void findNoticesLatestFirst() {
+		// given
+		Notice older = noticeRepository.saveAndFlush(Notice.create("이전 공지", "내용"));
+		Notice newer = noticeRepository.saveAndFlush(Notice.create("새 공지", "내용"));
+		entityManager.clear();
+
+		// when
+		List<Notice> result = noticeRepository.findAllByOrderByCreatedAtDescIdDesc();
+
+		// then
+		assertThat(result).extracting(Notice::getId).containsExactly(newer.getId(), older.getId());
+	}
+
+	@Test
+	@DisplayName("FAQ를 검색하면 질문 또는 답변이 대소문자 구분 없이 부분 일치하는 FAQ를 반환한다")
+	void searchFaqs() {
+		// given
+		Faq byQuestion = faqRepository.saveAndFlush(Faq.create("AI 분석은 몇 번까지 되나요?", "하루 20번입니다."));
+		Faq byAnswer = faqRepository.saveAndFlush(Faq.create("레시피 이름 규칙", "ai가 정한 이름을 고칠 수 있습니다."));
+		faqRepository.saveAndFlush(Faq.create("탈퇴는 어떻게 하나요?", "마이페이지에서 할 수 있습니다."));
+		entityManager.clear();
+
+		// when
+		List<Faq> result = faqRepository.search("Ai");
+
+		// then
+		assertThat(result).extracting(Faq::getId).containsExactly(byQuestion.getId(), byAnswer.getId());
+	}
+
+	@Test
+	@DisplayName("빈 keyword로 FAQ를 검색하면 모든 FAQ를 반환한다")
+	void searchFaqsWithEmptyKeyword() {
+		// given
+		faqRepository.saveAndFlush(SupportFixture.faq());
+		faqRepository.saveAndFlush(Faq.create("다른 질문", "다른 답변"));
+		entityManager.clear();
+
+		// when
+		List<Faq> result = faqRepository.search("");
+
+		// then
+		assertThat(result).hasSize(2);
+	}
 }

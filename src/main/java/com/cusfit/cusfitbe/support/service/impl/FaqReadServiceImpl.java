@@ -5,6 +5,7 @@ import com.cusfit.cusfitbe.global.exception.ErrorCode;
 import com.cusfit.cusfitbe.support.dto.response.FaqResponse;
 import com.cusfit.cusfitbe.support.repository.FaqRepository;
 import com.cusfit.cusfitbe.support.service.FaqReadService;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,5 +24,11 @@ public class FaqReadServiceImpl implements FaqReadService {
 		return repository.findById(id)
 				.map(FaqResponse::from)
 				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+	}
+
+	@Override
+	public List<FaqResponse> search(String keyword) {
+		String normalizedKeyword = keyword == null ? "" : keyword.strip();
+		return repository.search(normalizedKeyword).stream().map(FaqResponse::from).toList();
 	}
 }
