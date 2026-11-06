@@ -13,6 +13,7 @@ import com.cusfit.cusfitbe.support.controller.InquiryController;
 import com.cusfit.cusfitbe.support.controller.NoticeController;
 import com.cusfit.cusfitbe.terms.controller.TermsController;
 import com.cusfit.cusfitbe.user.controller.UserController;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -30,6 +32,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 /**
  * local이 아닌 프로필의 실제 애플리케이션 컨텍스트에 도메인 개발 Controller와 /api/dev 매핑이 없는지 확인한다.
+ * 도메인 Controller는 운영 API(/api/v1)만 등록되어야 한다.
  * 하위 클래스가 {@code @ActiveProfiles}와 {@code @Import(PostgisContainerConfig.class)}를 지정한다.
  * SecurityConfig 테스트의 중첩 스텁 Controller는 도메인 경로로 세지 않는다.
  */
@@ -51,15 +54,16 @@ abstract class AbstractDevApiAbsenceSupportTest {
 	protected abstract String expectedProfile();
 
 	@Test
-	@DisplayName("local이 아닌 프로필이면 도메인 개발 Controller가 빈으로 등록되지 않는다")
+	@DisplayName("local이 아닌 프로필이면 도메인 개발 Controller는 등록되지 않고 /api/v1 Controller만 등록된다")
 	void devControllersNotRegistered() {
 		// given
 		String[] activeProfiles = environment.getActiveProfiles();
 
 		// when
-		List<String> domainRestControllers = context.getBeansWithAnnotation(RestController.class).values().stream()
+		List<String> nonApiDomainControllers = context.getBeansWithAnnotation(RestController.class).values().stream()
 				.map(AopUtils::getTargetClass)
 				.filter(AbstractDevApiAbsenceSupportTest::isDomainClass)
+				.filter(type -> !isApiV1Controller(type))
 				.map(Class::getName)
 				.toList();
 
@@ -68,7 +72,7 @@ abstract class AbstractDevApiAbsenceSupportTest {
 		for (Class<?> controller : DEV_CONTROLLERS) {
 			assertThat(context.getBeanNamesForType(controller)).as(controller.getSimpleName()).isEmpty();
 		}
-		assertThat(domainRestControllers).isEmpty();
+		assertThat(nonApiDomainControllers).isEmpty();
 	}
 
 	@Test
@@ -95,6 +99,11 @@ abstract class AbstractDevApiAbsenceSupportTest {
 	private static boolean isDomainClass(Class<?> type) {
 		String packageName = type.getPackageName();
 		return packageName.startsWith(BASE_PACKAGE) && !packageName.startsWith(BASE_PACKAGE + "global");
+	}
+
+	private static boolean isApiV1Controller(Class<?> type) {
+		RequestMapping mapping = type.getAnnotation(RequestMapping.class);
+		return mapping != null && Arrays.stream(mapping.value()).allMatch(path -> path.startsWith("/api/v1"));
 	}
 
 	private static boolean isTestStub(HandlerMethod handlerMethod) {
