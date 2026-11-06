@@ -9,6 +9,7 @@ import com.cusfit.cusfitbe.global.exception.ErrorCode;
 import com.cusfit.cusfitbe.support.dto.response.FaqResponse;
 import com.cusfit.cusfitbe.support.dto.response.InquiryResponse;
 import com.cusfit.cusfitbe.support.dto.response.NoticeResponse;
+import com.cusfit.cusfitbe.support.dto.response.NoticeSummaryResponse;
 import com.cusfit.cusfitbe.support.fixture.SupportFixture;
 import com.cusfit.cusfitbe.support.repository.FaqRepository;
 import com.cusfit.cusfitbe.support.repository.InquiryRepository;
@@ -16,6 +17,7 @@ import com.cusfit.cusfitbe.support.repository.NoticeRepository;
 import com.cusfit.cusfitbe.support.service.impl.FaqReadServiceImpl;
 import com.cusfit.cusfitbe.support.service.impl.InquiryReadServiceImpl;
 import com.cusfit.cusfitbe.support.service.impl.NoticeReadServiceImpl;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -127,5 +129,34 @@ class SupportReadServiceTest {
 
 		// then
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("공지 목록을 조회하면 본문 없이 제목과 등록 시각만 반환한다")
+	void getNotices() {
+		// given
+		given(noticeRepository.findAllByOrderByCreatedAtDescIdDesc())
+				.willReturn(List.of(SupportFixture.persisted(SupportFixture.notice(), SupportFixture.NOTICE_ID)));
+
+		// when
+		List<NoticeSummaryResponse> responses = noticeReadService.getAll();
+
+		// then
+		assertThat(responses).containsExactly(new NoticeSummaryResponse(SupportFixture.NOTICE_ID,
+				SupportFixture.NOTICE_TITLE, SupportFixture.CREATED_AT));
+	}
+
+	@Test
+	@DisplayName("keyword 없이 FAQ를 검색하면 빈 문자열로 검색한다")
+	void searchFaqsWithoutKeyword() {
+		// given
+		given(faqRepository.search(""))
+				.willReturn(List.of(SupportFixture.persisted(SupportFixture.faq(), SupportFixture.FAQ_ID)));
+
+		// when
+		List<FaqResponse> responses = faqReadService.search(null);
+
+		// then
+		assertThat(responses).containsExactly(SupportFixture.faqResponse());
 	}
 }

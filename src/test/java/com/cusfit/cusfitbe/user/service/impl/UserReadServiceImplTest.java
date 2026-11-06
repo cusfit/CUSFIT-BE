@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 
 import com.cusfit.cusfitbe.global.exception.BusinessException;
 import com.cusfit.cusfitbe.global.exception.ErrorCode;
+import com.cusfit.cusfitbe.user.dto.response.NicknameAvailabilityResponse;
 import com.cusfit.cusfitbe.user.dto.response.UserResponse;
 import com.cusfit.cusfitbe.user.entity.User;
 import com.cusfit.cusfitbe.user.fixture.UserFixture;
@@ -56,5 +57,31 @@ class UserReadServiceImplTest {
 
 		// then
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("사용 중이 아닌 닉네임이면 사용 가능하다고 반환한다")
+	void nicknameAvailable() {
+		// given
+		given(userRepository.existsByNickname(UserFixture.NICKNAME)).willReturn(false);
+
+		// when
+		NicknameAvailabilityResponse response = userReadService.checkNicknameAvailability(UserFixture.NICKNAME);
+
+		// then
+		assertThat(response.available()).isTrue();
+	}
+
+	@Test
+	@DisplayName("이미 사용 중인 닉네임이면 사용할 수 없다고 반환한다")
+	void nicknameTaken() {
+		// given
+		given(userRepository.existsByNickname(UserFixture.NICKNAME)).willReturn(true);
+
+		// when
+		NicknameAvailabilityResponse response = userReadService.checkNicknameAvailability(UserFixture.NICKNAME);
+
+		// then
+		assertThat(response.available()).isFalse();
 	}
 }

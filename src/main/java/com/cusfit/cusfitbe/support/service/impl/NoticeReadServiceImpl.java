@@ -3,8 +3,10 @@ package com.cusfit.cusfitbe.support.service.impl;
 import com.cusfit.cusfitbe.global.exception.BusinessException;
 import com.cusfit.cusfitbe.global.exception.ErrorCode;
 import com.cusfit.cusfitbe.support.dto.response.NoticeResponse;
+import com.cusfit.cusfitbe.support.dto.response.NoticeSummaryResponse;
 import com.cusfit.cusfitbe.support.repository.NoticeRepository;
 import com.cusfit.cusfitbe.support.service.NoticeReadService;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,5 +25,10 @@ public class NoticeReadServiceImpl implements NoticeReadService {
 		return repository.findById(id)
 				.map(NoticeResponse::from)
 				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+	}
+
+	@Override
+	public List<NoticeSummaryResponse> getAll() {
+		return repository.findAllByOrderByCreatedAtDescIdDesc().stream().map(NoticeSummaryResponse::from).toList();
 	}
 }

@@ -94,4 +94,19 @@ class UserRepositoryTest {
 				.findFirst()
 				.orElseThrow(() -> new AssertionError("users." + name + " 컬럼이 없습니다"));
 	}
+
+	@Test
+	@DisplayName("저장된 닉네임과 정확히 같으면 존재한다고 판단한다")
+	void existsByNickname() {
+		// given
+		userRepository.saveAndFlush(UserFixture.user("온도"));
+
+		// when
+		boolean exists = userRepository.existsByNickname("온도");
+		boolean notExists = userRepository.existsByNickname("현영");
+
+		// then
+		assertThat(exists).isTrue();
+		assertThat(notExists).isFalse();
+	}
 }

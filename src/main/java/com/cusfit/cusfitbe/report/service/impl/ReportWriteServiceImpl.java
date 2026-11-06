@@ -1,7 +1,10 @@
 package com.cusfit.cusfitbe.report.service.impl;
 
+import com.cusfit.cusfitbe.global.exception.BusinessException;
+import com.cusfit.cusfitbe.global.exception.ErrorCode;
 import com.cusfit.cusfitbe.recipe.service.RecipeReadService;
 import com.cusfit.cusfitbe.report.dto.request.CreateReportRequest;
+import com.cusfit.cusfitbe.report.dto.request.ReportRecipeRequest;
 import com.cusfit.cusfitbe.report.dto.response.ReportResponse;
 import com.cusfit.cusfitbe.report.entity.Report;
 import com.cusfit.cusfitbe.report.repository.ReportRepository;
@@ -31,5 +34,11 @@ public class ReportWriteServiceImpl implements ReportWriteService {
 		recipeReadService.getById(request.recipeId());
 		Report report = Report.create(request.reporterId(), request.recipeId(), request.content());
 		return ReportResponse.from(reportRepository.save(report));
+	}
+
+	@Override
+	public void reportRecipe(String authSubject, Long recipeId, ReportRecipeRequest request) {
+		// 토큰 subject와 회원 연결(D1), reports의 사유·처리 상태 컬럼이 생기면 구현한다.
+		throw new BusinessException(ErrorCode.NOT_IMPLEMENTED);
 	}
 }

@@ -8,6 +8,7 @@ import com.cusfit.cusfitbe.catalog.entity.Menu;
 import com.cusfit.cusfitbe.catalog.entity.OptionPreset;
 import com.cusfit.cusfitbe.catalog.fixture.CatalogFixture;
 import com.cusfit.cusfitbe.global.config.PostgisContainerConfig;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,5 +105,61 @@ class CatalogRepositoryTest {
 
 		// when & then
 		assertThrows(DataIntegrityViolationException.class, () -> optionPresetRepository.saveAndFlush(optionPreset));
+	}
+
+	@Test
+	@DisplayName("메뉴를 검색하면 메뉴명 또는 브랜드명이 대소문자 구분 없이 부분 일치하는 메뉴를 브랜드명과 함께 반환한다")
+	void searchMenusByMenuOrBrandName() {
+		// given
+		Brand starbucks = brandRepository.saveAndFlush(Brand.create("Starbucks"));
+		Brand gongcha = brandRepository.saveAndFlush(Brand.create("공차"));
+		Menu javaChip = menuRepository.saveAndFlush(Menu.create(starbucks.getId(), "자바칩 프라푸치노"));
+		Menu latte = menuRepository.saveAndFlush(Menu.create(starbucks.getId(), "카페 라떼"));
+		menuRepository.saveAndFlush(Menu.create(gongcha.getId(), "블랙 밀크티"));
+		entityManager.clear();
+
+		// when
+		List<MenuSearchProjection> byMenuName = menuRepository.search(null, "자바칩");
+		List<MenuSearchProjection> byBrandName = menuRepository.search(null, "starBUCKS");
+
+		// then
+		assertThat(byMenuName).extracting(MenuSearchProjection::getId).containsExactly(javaChip.getId());
+		assertThat(byMenuName.get(0).getBrandName()).isEqualTo("Starbucks");
+		assertThat(byBrandName).extracting(MenuSearchProjection::getId).containsExactly(javaChip.getId(), latte.getId());
+	}
+
+	@Test
+	@DisplayName("브랜드 ID와 빈 keyword로 메뉴를 검색하면 그 브랜드의 메뉴만 모두 반환한다")
+	void searchMenusByBrandId() {
+		// given
+		Brand starbucks = brandRepository.saveAndFlush(Brand.create("스타벅스"));
+		Brand gongcha = brandRepository.saveAndFlush(Brand.create("공차"));
+		menuRepository.saveAndFlush(Menu.create(starbucks.getId(), "카페 라떼"));
+		Menu milkTea = menuRepository.saveAndFlush(Menu.create(gongcha.getId(), "블랙 밀크티"));
+		entityManager.clear();
+
+		// when
+		List<MenuSearchProjection> result = menuRepository.search(gongcha.getId(), "");
+
+		// then
+		assertThat(result).extracting(MenuSearchProjection::getId).containsExactly(milkTea.getId());
+	}
+
+	@Test
+	@DisplayName("브랜드 ID로 옵션 프리셋을 조회하면 그 브랜드의 프리셋만 ID 순으로 반환한다")
+	void findOptionPresetsByBrandId() {
+		// given
+		Brand brand = brandRepository.saveAndFlush(CatalogFixture.brand());
+		Brand other = brandRepository.saveAndFlush(Brand.create("공차"));
+		OptionPreset first = optionPresetRepository.saveAndFlush(OptionPreset.create(brand.getId(), "샷 추가"));
+		OptionPreset second = optionPresetRepository.saveAndFlush(OptionPreset.create(brand.getId(), "휘핑 추가"));
+		optionPresetRepository.saveAndFlush(OptionPreset.create(other.getId(), "펄 추가"));
+		entityManager.clear();
+
+		// when
+		List<OptionPreset> result = optionPresetRepository.findByBrandIdOrderByIdAsc(brand.getId());
+
+		// then
+		assertThat(result).extracting(OptionPreset::getId).containsExactly(first.getId(), second.getId());
 	}
 }

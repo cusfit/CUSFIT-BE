@@ -8,6 +8,7 @@ import com.cusfit.cusfitbe.terms.entity.Terms;
 import com.cusfit.cusfitbe.terms.fixture.TermsFixture;
 import jakarta.persistence.EntityManager;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -100,5 +101,28 @@ class TermsRepositoryTest {
 		assertThatThrownBy(() -> jdbcTemplate.update(sql, now, null, TermsFixture.VERSION,
 				TermsFixture.CONTENT_URL, Timestamp.from(TermsFixture.EFFECTIVE_AT)))
 				.isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	@DisplayName("기준 시각까지 시행된 약관만 종류 오름차순, 시행일 내림차순으로 조회한다")
+	void findEffectiveTerms() {
+		// given
+		Instant now = Instant.parse("2026-06-01T00:00:00Z");
+		Terms serviceV1 = termsRepository.saveAndFlush(
+				Terms.create("SERVICE", "1.0", "https://cusfit.example/s/1", Instant.parse("2026-01-01T00:00:00Z")));
+		Terms serviceV2 = termsRepository.saveAndFlush(
+				Terms.create("SERVICE", "2.0", "https://cusfit.example/s/2", Instant.parse("2026-03-01T00:00:00Z")));
+		termsRepository.saveAndFlush(
+				Terms.create("SERVICE", "3.0", "https://cusfit.example/s/3", Instant.parse("2026-12-01T00:00:00Z")));
+		Terms privacy = termsRepository.saveAndFlush(
+				Terms.create("PRIVACY", "1.0", "https://cusfit.example/p/1", Instant.parse("2026-01-01T00:00:00Z")));
+		entityManager.clear();
+
+		// when
+		List<Terms> result = termsRepository.findByEffectiveAtLessThanEqualOrderByTypeAscEffectiveAtDesc(now);
+
+		// then
+		assertThat(result).extracting(Terms::getId)
+				.containsExactly(privacy.getId(), serviceV2.getId(), serviceV1.getId());
 	}
 }
