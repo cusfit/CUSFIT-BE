@@ -6,6 +6,7 @@
 
 - **CUSFIT-BE**: 커스핏 백엔드. Spring Boot 3.5.14, Java 17.
 - `user`, `terms`, `catalog`, `recipe`, `report`, `notification`, `support`의 기본 저장·단건 조회 구조를 제공합니다. 상세 비즈니스 정책과 운영 인증 연동은 아직 구현하지 않았습니다.
+- 운영 API는 `/api/v1/**`이고 모든 프로필에 등록됩니다. 명세와 구현 현황(구현/501 미구현)은 `docs/API_DOCS.md`를 참고하세요.
 - 개발용 API는 `local` 프로필의 `/api/dev/**`에만 등록됩니다. 리소스와 실행 예시는 `README.md`, 구현 계약은 `docs/tasks/domain-basics-contract.md`를 참고하세요.
 
 ## 기술 스택 (build.gradle, application.yml 기준)

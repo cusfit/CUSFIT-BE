@@ -23,6 +23,23 @@
 
 현재 코드에는 local 프로필 전용 개발 API(`/api/dev/**`, 생성과 단건 조회만)만 있습니다 [도메인]. 아래 운영 API는 전부 새로 설계한 것이고, 엔드포인트 URL과 메서드는 별도 표시가 없어도 모두 **[추정]**입니다.
 
+## 구현 현황 (브랜치 `leesuyong849/api-skeleton`)
+
+모든 API의 Controller·Swagger 문서·요청/응답 DTO·Service 인터페이스를 만들었습니다. 현재 스키마(V1~V7)만으로 동작하는 API는 실제로 구현했고, 나머지는 501 `NOT_IMPLEMENTED`를 돌려줍니다. 요청 검증(400)과 인증(401/403)은 미구현 API에도 적용되어 있습니다.
+
+| 상태 | API | 비고 |
+|---|---|---|
+| 구현 | T1, T2, C1~C6, S1~S3, S5, U1 | C3의 `group` 필터, S1의 중요 공지 고정, T1의 `title`·`required`는 스키마가 없어 뺐습니다. U1의 중복 판정은 지금은 대소문자를 구분합니다(U-02 미확정). |
+| 501 | U2~U5, R1~R11, P1, N1~N3, S4 | 토큰 subject와 회원을 잇는 컬럼(D1)과 위 "현재 스키마에 없는 항목"이 필요합니다. |
+
+구현 메모
+
+- 인증: `/api/v1/**`는 OAuth2 Resource Server(JWT)로 검증하고, Controller는 `@AuthenticationPrincipal Jwt`의 `subject`를 서비스에 넘깁니다. `OAUTH2_ISSUER_URI`가 비어 있으면(local, test) 모든 Bearer 토큰을 401로 거부합니다.
+- 공개 범위(D2 가정): GET `/terms/**`, `/brands/**`, `/menus/**`, `/notices/**`, `/faqs/**`, `/recipes`, `/recipes/{id}`. `/admin/**`는 `ROLE_ADMIN` 권한이 필요하지만, JWT 클레임에서 권한을 꺼내는 방식은 D1과 함께 정해야 합니다.
+- local 외 프로필에서는 `/api/v1` 밖의 경로를 모두 막습니다(`DefaultSecurityConfig`).
+- 목록 응답은 `PageResponse { items, hasNext, nextCursor, totalCount }` 하나로 통일했습니다. 기본 크기 20, 최대 50입니다 [추정].
+- 보안 필터에서 나는 401/403은 아직 `ApiResponse` 형식이 아니라 본문이 비어 있습니다.
+
 ## 공통 규약
 
 응답 포맷과 에러 코드는 코드에 있는 그대로 씁니다. 인증 방식과 페이지네이션은 아직 정해지지 않았습니다.
