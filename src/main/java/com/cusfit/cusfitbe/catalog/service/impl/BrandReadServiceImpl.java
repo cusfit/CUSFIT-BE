@@ -5,6 +5,8 @@ import com.cusfit.cusfitbe.catalog.repository.BrandRepository;
 import com.cusfit.cusfitbe.catalog.service.BrandReadService;
 import com.cusfit.cusfitbe.global.exception.BusinessException;
 import com.cusfit.cusfitbe.global.exception.ErrorCode;
+import java.util.List;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,5 +25,10 @@ public class BrandReadServiceImpl implements BrandReadService {
 		return repository.findById(id)
 				.map(BrandResponse::from)
 				.orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+	}
+
+	@Override
+	public List<BrandResponse> getAll() {
+		return repository.findAll(Sort.by("id")).stream().map(BrandResponse::from).toList();
 	}
 }
